@@ -4,334 +4,216 @@
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-
 <title>Futbol Player</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.6/controls.min.css" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.6/shaka-player.ui.min.js" crossorigin="anonymous"></script>
 
 <style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:system-ui,sans-serif;}
+    
+    #wrap{position:absolute;inset:0;}
+    #video{width:100%;height:100%;}
 
-html,body{
-width:100%;
-height:100%;
-background:#000;
-overflow:hidden;
-font-family:sans-serif;
-}
+    .shaka-spinner-container{display:none!important;}
 
-#wrap{
-position:absolute;
-inset:0;
-}
+    #loader{
+        position:fixed;inset:0;background:#000;z-index:999;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+        transition:opacity .4s;
+    }
+    #loader.gone{opacity:0;pointer-events:none;}
+    
+    #ring{
+        width:46px;height:46px;
+        border:4px solid rgba(232,255,71,.1);
+        border-top-color:#e8ff47;
+        border-radius:50%;
+        animation:spin 0.9s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
 
-#video{
-width:100%;
-height:100%;
-}
+    #llbl{
+        font-size:13.5px;
+        font-weight:700;
+        letter-spacing:1.8px;
+        color:rgba(255,255,255,0.4);
+    }
 
-.shaka-spinner-container{
-display:none!important;
-}
+    #wm{
+        position:fixed;
+        top:12px;
+        left:12px;
+        z-index:900;
+        background:rgba(0,136,204,0.2);
+        backdrop-filter:blur(8px);
+        border:1px solid rgba(0,136,204,0.3);
+        padding:7px 13px;
+        border-radius:8px;
+        color:#fff;
+        font-size:13px;
+        font-weight:700;
+        text-decoration:none;
+    }
 
-#loader{
-position:fixed;
-inset:0;
-background:#000;
-z-index:999;
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-gap:14px;
-transition:opacity .4s;
-}
+    /* Modal */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      animation: fadeIn 0.4s ease;
+    }
+    .modal.hidden { display: none !important; }
 
-#loader.gone{
-opacity:0;
-pointer-events:none;
-}
+    .modal-content {
+      background: rgba(30,30,30,0.95);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 32px 28px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      color: #f3f4f6;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+    }
+    .modal-content h2 {
+      font-size: 26px;
+      margin-bottom: 12px;
+      color: #facc15;
+    }
+    .modal-content p {
+      font-size: 15.5px;
+      line-height: 1.55;
+      color: #d1d5db;
+      margin-bottom: 28px;
+    }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    #joinButton {
+      background: linear-gradient(90deg, #3b82f6, #06b6d4);
+      color: white;
+    }
+    #closeButton {
+      background: rgba(255,255,255,0.08);
+      color: #ddd;
+    }
+    #joinButton:hover, #closeButton:hover {
+      transform: scale(1.03);
+    }
 
-#ring{
-width:42px;
-height:42px;
-border:3px solid rgba(232,255,71,.12);
-border-top-color:#e8ff47;
-border-radius:50%;
-animation:spin 1s linear infinite;
-}
-
-@keyframes spin{
-to{
-transform:rotate(360deg);
-}
-}
-
-#llbl{
-font-size:11px;
-font-weight:800;
-letter-spacing:.12em;
-color:rgba(255,255,255,.25);
-}
-
-#wm{
-position:fixed;
-top:12px;
-left:1px;
-z-index:900;
-display:flex;
-align-items:center;
-gap:6px;
-background:rgba(0,136,204,.18);
-backdrop-filter:blur(8px);
-border:1px solid rgba(0,136,204,.28);
-padding:6px 11px;
-border-radius:7px;
-color:#fff;
-font-size:12px;
-font-weight:700;
-text-decoration:none;
-}
-
-/* POPUP */
-
-.modal{
-position:fixed;
-top:0;
-left:0;
-width:100vw;
-height:100vh;
-backdrop-filter:blur(6px);
-background:rgba(0,0,0,0.4);
-display:flex;
-justify-content:center;
-align-items:center;
-z-index:9999;
-animation:fadeIn .5s ease;
-}
-
-.modal.hidden{
-display:none!important;
-}
-
-.modal-content{
-background:rgba(255,255,255,0.05);
-border:1px solid rgba(255,255,255,0.1);
-border-radius:20px;
-padding:30px 25px;
-width:90%;
-max-width:400px;
-text-align:center;
-color:#f3f4f6;
-box-shadow:0 8px 32px rgba(0,0,0,0.4);
-backdrop-filter:blur(12px);
-transform:scale(.95);
-animation:scaleIn .4s ease forwards;
-}
-
-.modal-content h2{
-font-size:24px;
-font-weight:700;
-color:#facc15;
-margin-bottom:16px;
-}
-
-.modal-content p{
-font-size:16px;
-color:#d1d5db;
-margin-bottom:24px;
-line-height:1.5;
-}
-
-.modal-content strong{
-color:#fff;
-}
-
-.modal-content .btn{
-width:100%;
-padding:12px;
-font-size:16px;
-border:none;
-border-radius:12px;
-margin-bottom:12px;
-cursor:pointer;
-transition:.3s;
-}
-
-#joinButton{
-background:linear-gradient(to right,#3b82f6,#06b6d4);
-color:#fff;
-font-weight:500;
-}
-
-#joinButton:hover{
-background:linear-gradient(to right,#2563eb,#0891b2);
-transform:scale(1.02);
-}
-
-#closeButton{
-background:rgba(255,255,255,0.1);
-color:#f3f4f6;
-}
-
-#closeButton:hover{
-background:rgba(255,255,255,0.15);
-transform:scale(1.02);
-}
-
-@keyframes fadeIn{
-from{
-opacity:0;
-}
-to{
-opacity:1;
-}
-}
-
-@keyframes scaleIn{
-to{
-transform:scale(1);
-opacity:1;
-}
-}
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 </style>
 </head>
-
 <body>
 
-<a href="https://t.me/+l-BV45YWZoM3ZmE9" target="_blank" id="wm">
-@Shrey7nsh FB
-</a>
+<a href="https://t.me/+l-BV45YWZoM3ZmE9" target="_blank" id="wm">@Shrey7nsh FB</a>
 
 <div id="wrap" data-shaka-player-container>
-<video autoplay playsinline data-shaka-player id="video"></video>
+    <video autoplay playsinline data-shaka-player id="video"></video>
 </div>
 
 <div id="loader">
-<div id="ring"></div>
-<div id="llbl">LOADING STREAM</div>
+    <div id="ring"></div>
+    <div id="llbl">LOADING STREAM...</div>
 </div>
 
-<!-- TELEGRAM POPUP -->
-
-<div id="telegramModal" class="modal">
-<div class="modal-content">
-
-<h2>Join Our Telegram</h2>
-
-<p>
-Stay updated with the latest
-<strong>Live Match Links</strong>
-and updates. Click below to join our official Telegram channel.
-</p>
-
-<a href="https://t.me/+l-BV45YWZoM3ZmE9" target="_blank" style="text-decoration:none;">
-<button id="joinButton" class="btn">
-Join Telegram
-</button>
-</a>
-
-<button id="closeButton" class="btn">
-Maybe Later
-</button>
-
-</div>
+<!-- Telegram Modal -->
+<div id="telegramModal" class="modal hidden">
+  <div class="modal-content">
+    <h2>Join Our Telegram</h2>
+    <p>Stay updated with the latest <strong>Live Match Links</strong>, HD streams &amp; notifications.</p>
+    <a href="https://t.me/+l-BV45YWZoM3ZmE9" target="_blank" style="text-decoration:none;">
+      <button id="joinButton" class="btn">Join Telegram Channel</button>
+    </a>
+    <button id="closeButton" class="btn">Maybe Later</button>
+  </div>
 </div>
 
 <script>
-document.addEventListener("shaka-ui-loaded", initPlayer);
+document.addEventListener('shaka-ui-loaded', initPlayer);
 
-async function initPlayer(){
+async function initPlayer() {
+    const video = document.getElementById('video');
+    const player = video.ui.getControls().getPlayer();
+    
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
 
-const video = document.getElementById("video");
-const player = video.ui.getControls().getPlayer();
+    if (!id) {
+        document.getElementById('llbl').textContent = "NO STREAM ID";
+        return;
+    }
 
-const params = new URLSearchParams(window.location.search);
-const id = params.get("id");
+    try {
+        const res = await fetch("https://footsters.playsportsapi.workers.dev/");
+        if (!res.ok) throw new Error("Failed to fetch streams");
 
-if(!id){
-document.getElementById("llbl").textContent = "NO STREAM ID";
-return;
+        const data = await res.json();
+
+        if (!data[id]) {
+            document.getElementById('llbl').textContent = "STREAM NOT FOUND";
+            return;
+        }
+
+        const stream = data[id];
+
+        // DRM Configuration
+        if (stream.keys && Object.keys(stream.keys).length > 0) {
+            player.configure({
+                drm: {
+                    clearKeys: stream.keys
+                }
+            });
+        }
+
+        // Load Stream (Fixed: using "url" instead of "mpd")
+        if (!stream.url) {
+            throw new Error("Stream URL missing");
+        }
+
+        await player.load(stream.url);
+
+        // Hide loader on success
+        document.getElementById('loader').classList.add('gone');
+
+    } catch (e) {
+        console.error(e);
+        document.getElementById('llbl').innerHTML = `STREAM FAILED<br><small>${e.message}</small>`;
+        
+        setTimeout(() => {
+            document.getElementById('loader').classList.add('gone');
+        }, 3000);
+    }
 }
 
-try{
-
-// FETCH STREAM DATA
-const res = await fetch(
-`https://footsters.playsportsapi.workers.dev/?id=${id}`
-);
-
-if(!res.ok){
-throw new Error("Failed to fetch stream");
-}
-
-const stream = await res.json();
-
-console.log(stream);
-
-// VALIDATION
-if(!stream.url){
-document.getElementById("llbl").textContent = "INVALID STREAM";
-return;
-}
-
-// DRM CONFIG
-if(stream.keys){
-
-player.configure({
-drm:{
-clearKeys: stream.keys
-}
-});
-
-}
-
-// LOAD STREAM
-await player.load(stream.url);
-
-console.log("Stream Loaded");
-
-// HIDE LOADER
-document.getElementById("loader").classList.add("gone");
-
-}catch(e){
-
-console.error(e);
-
-document.getElementById("llbl").textContent = "STREAM FAILED";
-
-document.getElementById("loader").classList.add("gone");
-
-}
-}
-
-// POPUP CLOSE
-window.addEventListener("DOMContentLoaded", function(){
-
-document.getElementById("closeButton").onclick = function(){
-
-document
-.getElementById("telegramModal")
-.classList.add("hidden");
-
+// Modal Controls
+document.getElementById("closeButton").onclick = () => {
+    document.getElementById("telegramModal").classList.add("hidden");
 };
 
-});
+// Show modal after 6 seconds
+setTimeout(() => {
+    document.getElementById("telegramModal").classList.remove("hidden");
+}, 6000);
 
-// WAKE LOCK
-if("wakeLock" in navigator){
-
-navigator.wakeLock
-.request("screen")
-.catch(()=>{});
-
+// Wake Lock
+if ('wakeLock' in navigator) {
+    navigator.wakeLock.request('screen').catch(() => {});
 }
 </script>
-
 </body>
 </html>
