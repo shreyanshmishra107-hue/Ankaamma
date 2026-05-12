@@ -1,96 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>BigFoot Player</title>
+<title>M3U8 Player</title>
 
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.6/controls.min.css"
-crossorigin="anonymous">
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.6/shaka-player.ui.min.js"
-crossorigin="anonymous"></script>
+<!-- JW Player -->
+<script src="https://content.jwplatform.com/libraries/SAHhwvZq.js"></script>
 
 <style>
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
 html,
 body{
-    width:100%;
+    margin:0;
     height:100%;
     background:#000;
     overflow:hidden;
     font-family:sans-serif;
 }
 
-#wrap{
-    position:absolute;
+.jwplayer{
+    position:absolute!important;
     inset:0;
 }
 
-#video{
-    width:100%;
-    height:100%;
-    background:#000;
+.jwplayer.jw-flag-aspect-mode{
+    min-height:100%;
+    max-height:100%;
 }
 
-.shaka-spinner-container{
-    display:none!important;
-}
-
-/* ===== Loader ===== */
-
-#loader{
-    position:fixed;
-    inset:0;
-    background:#000;
-    z-index:999;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:14px;
-    transition:opacity .4s;
-}
-
-#loader.gone{
-    opacity:0;
-    pointer-events:none;
-}
-
-#ring{
-    width:42px;
-    height:42px;
-    border:3px solid rgba(232,255,71,.12);
-    border-top-color:#e8ff47;
-    border-radius:50%;
-    animation:spin 1s linear infinite;
-}
-
-@keyframes spin{
-    to{
-        transform:rotate(360deg)
-    }
-}
-
-#llbl{
-    font-size:11px;
-    font-weight:800;
-    letter-spacing:.12em;
-    color:rgba(255,255,255,.25);
-}
-
-/* ===== Watermark ===== */
+/* ===== WATERMARK ===== */
 
 #wm{
     position:fixed;
@@ -111,38 +53,7 @@ body{
     text-decoration:none;
 }
 
-/* ===== Bottom Banner ===== */
-
-#bottom-banner{
-    position:fixed;
-    bottom:12px;
-    left:50%;
-    transform:translateX(-50%);
-    z-index:900;
-    display:flex;
-    align-items:center;
-    gap:10px;
-    background:rgba(0,0,0,.55);
-    backdrop-filter:blur(10px);
-    border:1px solid rgba(255,255,255,.12);
-    padding:10px 16px;
-    border-radius:14px;
-    color:#fff;
-    font-size:13px;
-    font-weight:700;
-}
-
-#bottom-banner strong{
-    color:#fff;
-}
-
-#bottom-banner a{
-    color:#00ccff;
-    text-decoration:none;
-    font-weight:800;
-}
-
-/* ===== Popup ===== */
+/* ===== POPUP ===== */
 
 .modal{
     position:fixed;
@@ -249,7 +160,7 @@ body{
 
 <body>
 
-<!-- Watermark -->
+<!-- WATERMARK -->
 
 <a href="https://t.me/+l-BV45YWZoM3ZmE9"
 target="_blank"
@@ -258,47 +169,6 @@ id="wm">
 @Shrey7nsh FB
 
 </a>
-
-<!-- Bottom Banner -->
-
-<div id="bottom-banner">
-
-    Stay updated with latest
-    <strong>Live Match Links</strong>
-
-    <a href="https://t.me/+l-BV45YWZoM3ZmE9"
-    target="_blank">
-
-        Join Telegram
-
-    </a>
-
-</div>
-
-<!-- Player -->
-
-<div id="wrap" data-shaka-player-container>
-
-    <video autoplay
-    playsinline
-    data-shaka-player
-    id="video"></video>
-
-</div>
-
-<!-- Loader -->
-
-<div id="loader">
-
-    <div id="ring"></div>
-
-    <div id="llbl">
-
-        LOADING STREAM
-
-    </div>
-
-</div>
 
 <!-- TELEGRAM POPUP -->
 
@@ -336,115 +206,90 @@ id="wm">
 
 </div>
 
+<div id="jwplayerDiv"></div>
+
 <script>
 
-document.addEventListener(
-    'shaka-ui-loaded',
-    initPlayer
-);
+const params = new URLSearchParams(window.location.search);
 
-async function initPlayer(){
+const streamId  = params.get("id");
+const directUrl = params.get("url");
 
-    const video =
-    document.getElementById('video');
-
-    const player =
-    video.ui.getControls().getPlayer();
-
-    const params =
-    new URLSearchParams(
-        window.location.search
-    );
-
-    const streamId =
-    params.get("id");
-
-    const directUrl =
-    params.get("url");
+async function startPlayer(){
 
     try{
 
         let stream = directUrl;
 
-        // ===== LOAD FROM ?id= =====
-
+        // Load from ?id=
         if(streamId){
 
             const response = await fetch(
                 "https://lchdxfootball.pages.dev/premium.js"
             );
 
-            const jsText =
-            await response.text();
+            const jsText = await response.text();
 
-            const objectText =
-            jsText
-            .replace("const streamMap =", "")
-            .trim()
-            .replace(/;$/, "");
+            const objectText = jsText
+                .replace("const streamMap =", "")
+                .trim()
+                .replace(/;$/, "");
 
-            const data =
-            eval("(" + objectText + ")");
+            const data = eval("(" + objectText + ")");
 
             if(
                 data[streamId] &&
                 data[streamId].url
             ){
 
-                stream =
-                data[streamId].url;
-
-                if(data[streamId].poster){
-
-                    video.poster =
-                    data[streamId].poster;
-                }
+                stream = data[streamId].url;
 
             }else{
 
-                document
-                .getElementById("llbl")
-                .textContent =
-                "STREAM NOT FOUND";
-
+                alert("Invalid Stream ID");
                 return;
             }
         }
 
-        // ===== FALLBACK =====
-
+        // Default fallback
         if(!stream){
 
             stream =
-            "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
+            "https://rumble.com/live-hls-dvr/6z66p4/playlist.m3u8";
         }
 
-        // ===== LOAD STREAM =====
+        // JW PLAYER
+        const player = jwplayer("jwplayerDiv");
 
-        await player.load(stream);
+        player.setup({
 
-        // ===== HIDE LOADER =====
+            file: stream,
+            type: "hls",
 
-        document
-        .getElementById("loader")
-        .classList.add("gone");
+            width: "100%",
+            height: "100%",
 
-    }catch(e){
+            autostart: true,
 
-        console.error(e);
+            stretching: "uniform",
 
-        document
-        .getElementById("llbl")
-        .textContent =
-        "STREAM FAILED";
+            controls: true,
 
-        document
-        .getElementById("loader")
-        .classList.add("gone");
+            primary: "html5"
+
+        });
+
+    }catch(error){
+
+        console.error(error);
+
+        alert("Failed To Load Stream");
     }
 }
 
-// ===== CLOSE POPUP =====
+startPlayer();
+
+// CLOSE POPUP
 
 window.addEventListener(
     "DOMContentLoaded",
@@ -460,16 +305,6 @@ window.addEventListener(
         };
     }
 );
-
-// ===== WAKE LOCK =====
-
-if('wakeLock' in navigator){
-
-    navigator
-    .wakeLock
-    .request('screen')
-    .catch(()=>{});
-}
 
 </script>
 
