@@ -71,6 +71,11 @@ video.mode-cover { object-fit:cover; }
 .shaka-fit-btn:hover { opacity:1; }
 .shaka-fit-btn svg { width:20px; height:20px; display:block; }
 
+/* Hide Shaka Spinner */
+.shaka-spinner-container {
+    display: none !important;
+}
+
 /* Telegram Banner */
 #wm {
     position:fixed; top:12px; left:04px; z-index:900;
@@ -138,7 +143,8 @@ video.mode-cover { object-fit:cover; }
 <div id="telegramModal" class="modal">
   <div class="modal-content">
     <h2>Join Our Telegram</h2>
-    <p>Stay updated with the latest <strong>Live Match Links</strong> and updates.Click below to join our official Telegram channel.</p>
+    <p>Stay updated with the latest <strong>Live Match Links</strong> and updates.Click below to join our official Telegram channel.
+</p>
     <a href="https://t.me/+l-BV45YWZoM3ZmE9" target="_blank" style="text-decoration:none;">
       <button id="joinButton" class="btn">Join Telegram</button>
     </a>
@@ -255,7 +261,7 @@ video.mode-cover { object-fit:cover; }
             await video.play().catch(() => {});
 
             overlay.style.display = "none";
-            tapGate.classList.remove("hidden");   // Show tap gate
+            tapGate.classList.remove("hidden");
             showStatus("Live ●", "ok", 5000);
 
         } catch (e) {
@@ -277,7 +283,6 @@ video.mode-cover { object-fit:cover; }
         document.getElementById("telegramModal").classList.add("hidden");
     };
 
-    // Initialize
     document.addEventListener("DOMContentLoaded", startPlayer);
 
 })();
