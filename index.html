@@ -283,11 +283,6 @@ video.mode-cover { object-fit:cover; }
             tapGate.classList.remove("hidden");
             showStatus("LIVE ●", "ok", 1800);
 
-            // Show Telegram Popup
-            setTimeout(() => {
-                telegramModal.classList.remove("hidden");
-            }, 7000);
-
         } catch (e) {
             console.error(e);
             showStatus("Stream Failed", "err", 0);
