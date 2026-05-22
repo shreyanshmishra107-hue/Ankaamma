@@ -25,7 +25,7 @@ html, body {
 
 #pc {
     position:fixed; inset:0; background:#000; display:none;
-    align-items:center; justify-content:center;
+    align-items:center; justify-content:center; touch-action:manipulation;
 }
 video {
     width:100%; height:100%; object-fit:contain; background:#000;
@@ -82,6 +82,27 @@ video.mode-cover { object-fit:cover; }
     border-radius:7px; color:#fff; font-size:12px; font-weight:700;
     text-decoration:none;
 }
+
+/* Telegram Popup */
+.modal {
+    position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px);
+    display:flex; justify-content:center; align-items:center; z-index:9999;
+}
+.modal.hidden { display:none; }
+.modal-content {
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+    border-radius:20px; padding:30px 25px; width:90%; max-width:400px;
+    text-align:center; color:#f3f4f6; box-shadow:0 8px 32px rgba(0,0,0,0.4);
+    backdrop-filter:blur(12px);
+}
+.modal-content h2 { font-size:24px; font-weight:700; color:#facc15; margin-bottom:16px; }
+.modal-content p { font-size:16px; color:#d1d5db; margin-bottom:24px; line-height:1.5; }
+.modal-content .btn {
+    width:100%; padding:12px; font-size:16px; border:none; border-radius:12px;
+    margin-bottom:12px; cursor:pointer; transition:.3s;
+}
+#joinButton { background:linear-gradient(to right,#3b82f6,#06b6d4); color:#fff; font-weight:500; }
+#closeButton { background:rgba(255,255,255,0.1); color:#f3f4f6; }
 </style>
 </head>
 <body>
@@ -113,6 +134,18 @@ video.mode-cover { object-fit:cover; }
   </div>
 </div>
 
+<!-- Telegram Popup -->
+<div id="telegramModal" class="modal">
+  <div class="modal-content">
+    <h2>Join Our Telegram</h2>
+    <p>Stay updated with the latest <strong>Live Match Links</strong> and updates. Click below to join our official Telegram channel.</p>
+    <a href="https://t.me/+l-BV45YWZoM3ZmE9" target="_blank" style="text-decoration:none;">
+      <button id="joinButton" class="btn">Join Telegram</button>
+    </a>
+    <button id="closeButton" class="btn">Maybe Later</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
 
 <script>
@@ -125,6 +158,7 @@ video.mode-cover { object-fit:cover; }
     const pc = document.getElementById("pc");
     const video = document.getElementById("v");
     const tapGate = document.getElementById("tap-gate");
+    const telegramModal = document.getElementById("telegramModal");
 
     let stTimer = null;
 
@@ -157,7 +191,6 @@ video.mode-cover { object-fit:cover; }
             vid.classList.remove("mode-fill", "mode-cover");
             if (m === "fill") vid.classList.add("mode-fill");
             if (m === "cover") vid.classList.add("mode-cover");
-            // You can expand icons later if needed
         });
     }
 
@@ -186,30 +219,35 @@ video.mode-cover { object-fit:cover; }
             seekBarColors: { base: "rgba(255,255,255,0.2)", buffered: "rgba(56,189,248,0.5)", played: "#38bdf8" }
         });
 
-        setTimeout(() => injectFitButton(pc, video), 100);
+        setTimeout(() => injectFitButton(pc, video), 80);
 
-        // ================== ULTRA FAST LIVE CONFIG ==================
+        // ================== SUPER FAST / AGGRESSIVE CONFIG ==================
         player.configure({
             manifest: {
-                defaultPresentationDelay: 2,        // Very aggressive
+                defaultPresentationDelay: 1,        // Extremely low
                 dash: { clockSyncUri: '' }
             },
             streaming: {
                 lowLatencyMode: true,
-                bufferingGoal: 4,
-                rebufferingGoal: 1.5,
-                safeSeekOffset: 1,
+                bufferingGoal: 3,                   // Very low buffer
+                rebufferingGoal: 1,
+                safeSeekOffset: 0.8,
                 stallEnabled: true,
-                stallThreshold: 0.5,
+                stallThreshold: 0.4,
                 useNativeHlsOnSafari: true,
-                segmentPrefetchLimit: 2
+                segmentPrefetchLimit: 2,
+                inaccurateManifestTolerance: 0
             },
             abr: {
                 enabled: true,
-                defaultBandwidthEstimate: 2500000,
-                restrictions: { maxHeight: 720 }
+                defaultBandwidthEstimate: 1800000,   // Start lower for faster load
+                restrictions: { maxHeight: 576 }     // Lower initial quality = faster start
             }
         });
+
+        // Faster retry
+        player.configure('manifest.retryParameters.baseDelay', 80);
+        player.configure('streaming.retryParameters.baseDelay', 80);
 
         try {
             setLoadMsg("Fetching Stream...");
@@ -221,34 +259,38 @@ video.mode-cover { object-fit:cover; }
 
             if (!stream || !stream.url) throw new Error("Stream not found");
 
-            // DRM
             if (stream.keys) {
                 player.configure({ drm: { clearKeys: stream.keys } });
             }
 
             await player.load(stream.url);
             
-            // Ultra Aggressive Live Edge
+            // SUPER AGGRESSIVE Live Edge
             setTimeout(() => {
                 try {
                     player.goToLive();
                     const range = player.seekRange();
                     if (range && range.end) {
-                        player.seek(Math.max(range.end - 1.8, range.start));
+                        player.seek(Math.max(range.end - 1.2, range.start)); // Very close to live
                     }
                 } catch(e) {}
-            }, 500);
+            }, 450);
 
             video.muted = true;
             await video.play().catch(() => {});
 
             overlay.style.display = "none";
             tapGate.classList.remove("hidden");
-            showStatus("Live ●", "ok", 2500);
+            showStatus("Live ●", "ok", 2000);
+
+            // Show Telegram Popup after 8 seconds
+            setTimeout(() => {
+                telegramModal.classList.remove("hidden");
+            }, 8000);
 
         } catch (e) {
             console.error(e);
-            showStatus("Stream Failed - " + (e.message || ""), "err", 0);
+            showStatus("Stream Failed", "err", 0);
             setLoadMsg("Failed to Load");
         }
 
@@ -259,6 +301,11 @@ video.mode-cover { object-fit:cover; }
             video.play().catch(() => {});
         }, { once: true });
     }
+
+    // Popup Handlers
+    document.getElementById("closeButton").onclick = () => {
+        document.getElementById("telegramModal").classList.add("hidden");
+    };
 
     document.addEventListener("DOMContentLoaded", startPlayer);
 })();
