@@ -6,6 +6,7 @@
 <meta name="referrer" content="no-referrer">
 <title>BigFoot Player</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css">
+
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body {
@@ -75,40 +76,17 @@ video.mode-cover { object-fit:cover; }
 
 /* Telegram Banner */
 #wm {
-    position:fixed; top:12px; left:04px; z-index:900;
+    position:fixed; top:12px; left:4px; z-index:900;
     background:rgba(0,136,204,.18); backdrop-filter:blur(8px);
     border:1px solid rgba(0,136,204,.28); padding:6px 11px;
     border-radius:7px; color:#fff; font-size:12px; font-weight:700;
     text-decoration:none;
 }
-
-/* Telegram Popup */
-.modal {
-    position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px);
-    display:flex; justify-content:center; align-items:center; z-index:9999;
-}
-.modal.hidden { display:none; }
-.modal-content {
-    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
-    border-radius:20px; padding:30px 25px; width:90%; max-width:400px;
-    text-align:center; color:#f3f4f6; box-shadow:0 8px 32px rgba(0,0,0,0.4);
-    backdrop-filter:blur(12px);
-}
-.modal-content h2 { font-size:24px; font-weight:700; color:#facc15; margin-bottom:16px; }
-.modal-content p { font-size:16px; color:#d1d5db; margin-bottom:24px; line-height:1.5; }
-.modal-content .btn {
-    width:100%; padding:12px; font-size:16px; border:none; border-radius:12px;
-    margin-bottom:12px; cursor:pointer; transition:.3s;
-}
-#joinButton { background:linear-gradient(to right,#3b82f6,#06b6d4); color:#fff; font-weight:500; }
-#closeButton { background:rgba(255,255,255,0.1); color:#f3f4f6; }
 </style>
 </head>
 <body>
 
-<a href="https://t.me/+l-BV45YWZoM3ZmE9" target="_blank" id="wm">
-    @Shrey7nsh FB
-</a>
+<a href="https://t.me/+l-BV45YWZoM3ZmE9" target="_blank" id="wm">@Shrey7nsh FB</a>
 
 <div id="overlay">
   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
@@ -135,19 +113,8 @@ video.mode-cover { object-fit:cover; }
   </div>
 </div>
 
-<!-- Telegram Popup -->
-<div id="telegramModal" class="modal">
-  <div class="modal-content">
-    <h2>Join Our Telegram</h2>
-    <p>Stay updated with the latest <strong>Live Match Links</strong> and updates.</p>
-    <a href="https://t.me/+l-BV45YWZoM3ZmE9" target="_blank" style="text-decoration:none;">
-      <button id="joinButton" class="btn">Join Telegram</button>
-    </a>
-    <button id="closeButton" class="btn">Maybe Later</button>
-  </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
+
 <script>
 (async function () {
     "use strict";
@@ -190,9 +157,7 @@ video.mode-cover { object-fit:cover; }
             vid.classList.remove("mode-fill", "mode-cover");
             if (m === "fill") vid.classList.add("mode-fill");
             if (m === "cover") vid.classList.add("mode-cover");
-            
-            const icons = { /* same as before */ };
-            btn.innerHTML = icons[m] || icons.contain;
+            // You can expand icons later if needed
         });
     }
 
@@ -223,24 +188,25 @@ video.mode-cover { object-fit:cover; }
 
         setTimeout(() => injectFitButton(pc, video), 100);
 
-        // ================== OPTIMIZED LIVE CONFIG ==================
+        // ================== ULTRA FAST LIVE CONFIG ==================
         player.configure({
             manifest: {
-                defaultPresentationDelay: 4,        // Reduced for faster start
-                dash: { clockSyncUri: '' }         // Helps with time sync
+                defaultPresentationDelay: 2,        // Very aggressive
+                dash: { clockSyncUri: '' }
             },
             streaming: {
-                lowLatencyMode: false,
-                bufferingGoal: 6,
-                rebufferingGoal: 2,
-                safeSeekOffset: 2,
+                lowLatencyMode: true,
+                bufferingGoal: 4,
+                rebufferingGoal: 1.5,
+                safeSeekOffset: 1,
                 stallEnabled: true,
-                stallThreshold: 0.8,
-                useNativeHlsOnSafari: true
+                stallThreshold: 0.5,
+                useNativeHlsOnSafari: true,
+                segmentPrefetchLimit: 2
             },
             abr: {
                 enabled: true,
-                defaultBandwidthEstimate: 2000000,
+                defaultBandwidthEstimate: 2500000,
                 restrictions: { maxHeight: 720 }
             }
         });
@@ -262,17 +228,23 @@ video.mode-cover { object-fit:cover; }
 
             await player.load(stream.url);
             
-            // Force Live Edge - This fixes "starts from last" issue
+            // Ultra Aggressive Live Edge
             setTimeout(() => {
-                try { player.goToLive(); } catch(e) {}
-            }, 800);
+                try {
+                    player.goToLive();
+                    const range = player.seekRange();
+                    if (range && range.end) {
+                        player.seek(Math.max(range.end - 1.8, range.start));
+                    }
+                } catch(e) {}
+            }, 500);
 
             video.muted = true;
             await video.play().catch(() => {});
 
             overlay.style.display = "none";
             tapGate.classList.remove("hidden");
-            showStatus("Live ●", "ok", 3000);
+            showStatus("Live ●", "ok", 2500);
 
         } catch (e) {
             console.error(e);
@@ -287,10 +259,6 @@ video.mode-cover { object-fit:cover; }
             video.play().catch(() => {});
         }, { once: true });
     }
-
-    document.getElementById("closeButton").onclick = () => {
-        document.getElementById("telegramModal").classList.add("hidden");
-    };
 
     document.addEventListener("DOMContentLoaded", startPlayer);
 })();
