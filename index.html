@@ -114,13 +114,13 @@ video.mode-cover { object-fit:cover; }
     <circle cx="20" cy="20" r="16" stroke="#222" stroke-width="4"/>
     <path d="M20 4a16 16 0 0 1 16 16" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/>
   </svg>
-  <p id="loadMsg">Loading Stream...</p>
+  <p id="loadMsg">Connecting Live...</p>
 </div>
 
 <div id="status"></div>
 
 <div id="pc">
-  <video id="v" autoplay muted playsinline preload="none"></video>
+  <video id="v" autoplay muted playsinline preload="auto"></video>
   
   <div id="tap-gate">
     <div id="tap-inner">
@@ -171,7 +171,6 @@ video.mode-cover { object-fit:cover; }
 
     function setLoadMsg(msg) { loadMsg.textContent = msg; }
 
-    // Fit Button
     function injectFitButton(container, vid) {
         const panel = container.querySelector(".shaka-controls-button-panel");
         if (!panel) return;
@@ -219,39 +218,40 @@ video.mode-cover { object-fit:cover; }
             seekBarColors: { base: "rgba(255,255,255,0.2)", buffered: "rgba(56,189,248,0.5)", played: "#38bdf8" }
         });
 
-        setTimeout(() => injectFitButton(pc, video), 80);
+        setTimeout(() => injectFitButton(pc, video), 50);
 
-        // ================== SUPER FAST / AGGRESSIVE CONFIG ==================
+        // ================== MAXIMUM SPEED CONFIG ==================
         player.configure({
             manifest: {
-                defaultPresentationDelay: 1,        // Extremely low
+                defaultPresentationDelay: 0,           // Absolute minimum
                 dash: { clockSyncUri: '' }
             },
             streaming: {
                 lowLatencyMode: true,
-                bufferingGoal: 3,                   // Very low buffer
-                rebufferingGoal: 1,
-                safeSeekOffset: 0.8,
+                bufferingGoal: 2.2,                    // Extremely low
+                rebufferingGoal: 0.8,
+                safeSeekOffset: 0.5,
                 stallEnabled: true,
-                stallThreshold: 0.4,
+                stallThreshold: 0.3,
                 useNativeHlsOnSafari: true,
-                segmentPrefetchLimit: 2,
+                segmentPrefetchLimit: 1,
                 inaccurateManifestTolerance: 0
             },
             abr: {
                 enabled: true,
-                defaultBandwidthEstimate: 1800000,   // Start lower for faster load
-                restrictions: { maxHeight: 576 }     // Lower initial quality = faster start
+                defaultBandwidthEstimate: 1200000,     // Start very low for speed
+                restrictions: { maxHeight: 480 }       // Low resolution = fastest start
             }
         });
 
-        // Faster retry
-        player.configure('manifest.retryParameters.baseDelay', 80);
-        player.configure('streaming.retryParameters.baseDelay', 80);
+        // Ultra fast retries
+        player.configure('manifest.retryParameters.baseDelay', 50);
+        player.configure('manifest.retryParameters.maxAttempts', 6);
+        player.configure('streaming.retryParameters.baseDelay', 50);
 
         try {
-            setLoadMsg("Fetching Stream...");
-            showStatus("Loading stream...", "warn", 0);
+            setLoadMsg("Connecting Live...");
+            showStatus("Loading live stream...", "warn", 0);
 
             const res = await fetch(`https://footsters.playsportsapi.workers.dev/?id=${id}`);
             const data = await res.json();
@@ -265,28 +265,28 @@ video.mode-cover { object-fit:cover; }
 
             await player.load(stream.url);
             
-            // SUPER AGGRESSIVE Live Edge
+            // MAXIMUM AGGRESSIVE LIVE EDGE
             setTimeout(() => {
                 try {
                     player.goToLive();
                     const range = player.seekRange();
                     if (range && range.end) {
-                        player.seek(Math.max(range.end - 1.2, range.start)); // Very close to live
+                        player.seek(Math.max(range.end - 0.8, range.start)); // Extremely close to live
                     }
                 } catch(e) {}
-            }, 450);
+            }, 380);
 
             video.muted = true;
             await video.play().catch(() => {});
 
             overlay.style.display = "none";
             tapGate.classList.remove("hidden");
-            showStatus("Live ●", "ok", 2000);
+            showStatus("LIVE ●", "ok", 1800);
 
-            // Show Telegram Popup after 8 seconds
+            // Show Telegram Popup
             setTimeout(() => {
                 telegramModal.classList.remove("hidden");
-            }, 8000);
+            }, 7000);
 
         } catch (e) {
             console.error(e);
@@ -294,7 +294,6 @@ video.mode-cover { object-fit:cover; }
             setLoadMsg("Failed to Load");
         }
 
-        // Tap Gate
         tapGate.addEventListener("click", () => {
             tapGate.classList.add("hidden");
             video.muted = false;
@@ -302,9 +301,8 @@ video.mode-cover { object-fit:cover; }
         }, { once: true });
     }
 
-    // Popup Handlers
     document.getElementById("closeButton").onclick = () => {
-        document.getElementById("telegramModal").classList.add("hidden");
+        telegramModal.classList.add("hidden");
     };
 
     document.addEventListener("DOMContentLoaded", startPlayer);
