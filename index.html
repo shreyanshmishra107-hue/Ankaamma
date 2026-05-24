@@ -247,7 +247,10 @@ document.addEventListener('shaka-ui-loaded', initPlayer);
 async function initPlayer(){
 
     const video = document.getElementById('video');
-    const player = video.ui.getControls().getPlayer();
+
+    const ui = video['ui'];
+    const controls = ui.getControls();
+    const player = controls.getPlayer();
 
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
@@ -259,42 +262,43 @@ async function initPlayer(){
 
     try{
 
-        // FETCH CHANNEL DATA BY ID
         const res = await fetch(
-            `https://footsters.playsportsapi.workers.dev/?id=${id}`
+            `https://speedsters.playsportsapi.workers.dev/?id=${encodeURIComponent(id)}`
         );
+
+        if(!res.ok){
+            throw new Error("API ERROR");
+        }
 
         const data = await res.json();
 
-        // GET STREAM OBJECT
-        const stream = data[id];
-
-        if(!stream){
-            document.getElementById('llbl').textContent = "STREAM NOT FOUND";
-            return;
+        if(!data.stream){
+            throw new Error("STREAM NOT FOUND");
         }
 
-        // DRM CONFIG
-        player.configure({
-            drm:{
-                clearKeys: stream.keys
-            }
-        });
+        if(data.drm && data.drm.kid && data.drm.key){
 
-        // LOAD MPD
-        await player.load(stream.url);
+            player.configure({
+                drm:{
+                    clearKeys:{
+                        [data.drm.kid]: data.drm.key
+                    }
+                }
+            });
 
-        // OPTIONAL POSTER
-        if(stream.poster){
-            video.poster = stream.poster;
         }
 
-        // HIDE LOADER
+        await player.load(data.stream);
+
+        if(data.poster){
+            video.poster = data.poster;
+        }
+
         document.getElementById('loader').classList.add('gone');
 
-    }catch(e){
+    }catch(error){
 
-        console.error(e);
+        console.error(error);
 
         document.getElementById('llbl').textContent = "STREAM FAILED";
 
@@ -304,19 +308,20 @@ async function initPlayer(){
 
 // POPUP CLOSE
 
-window.addEventListener("DOMContentLoaded", function(){
+window.addEventListener("DOMContentLoaded", () => {
 
-    document.getElementById("closeButton").onclick = function(){
-
+    document.getElementById("closeButton").onclick = () => {
         document.getElementById("telegramModal").classList.add("hidden");
     };
+
 });
 
 // WAKE LOCK
 
-if('wakeLock' in navigator){
+if("wakeLock" in navigator){
 
-    navigator.wakeLock.request('screen').catch(()=>{});
+    navigator.wakeLock.request("screen").catch(() => {});
+
 }
 
 </script>
